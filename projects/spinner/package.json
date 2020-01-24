@@ -1,6 +1,6 @@
 {
   "name": "@talha0113/spinner",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "repository": "https://github.com/talha0113/angular-spinner",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
