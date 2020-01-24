@@ -1,0 +1,89 @@
+name: CI-CD
+on:
+  pull_request:
+    branches:
+      - 'master'
+  push:
+    paths:    
+      - '**'
+    branches:
+      - 'master'      
+      - 'feature/*'
+      - 'bug/*'
+jobs:
+  build-release:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout
+      id: checkout
+      uses: actions/checkout@master
+      
+    - name: ci
+      id: ci
+      shell: pwsh
+      env:
+        NPM_CONFIG_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: npm ci
+
+    - name: lint
+      id: lint
+      shell: pwsh
+      run: |
+        npm run lint:library
+        npm run lint:application
+
+    - name: test
+      id: test
+      shell: pwsh
+      if: github.event_name == 'pull_request'
+      run: |
+        npm run test:library
+        npm run test:application
+    
+    - name: build
+      id: build
+      shell: pwsh
+      run: |
+        npm run build:library
+        npm run build:application
+        
+    - name: publish
+      id: publish
+      if: github.ref == 'refs/heads/master'
+      shell: pwsh
+      working-directory: ./dist/spinner
+      env:
+        NPM_CONFIG_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        npm publish
+    
+    - name: archive
+      id: archive
+      if: github.event_name != 'pull_request'
+      shell: pwsh
+      run: |
+        Compress-Archive -Path dist/application/* -DestinationPath dist/application/application.zip
+
+    - name: upload
+      id: upload
+      if: github.event_name != 'pull_request'
+      uses: actions/upload-artifact@master
+      with:
+        name: drop
+        path: dist/application/application.zip
+
+    - name: login
+      id: login
+      if: github.ref == 'refs/heads/master'
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: deploy
+      id: deploy
+      if: github.ref == 'refs/heads/master'
+      run: |
+        az storage blob delete-batch -s \$web --account-name githuboverviewstor --pattern '[!dummy]*'
+        az storage blob upload-batch -s ./dist/application -d \$web --account-name githuboverviewstor
