@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "start": "ng serve application",
-    "build:application": "ng build application --prod=true --vendorChunk=true --statsJson=true",
+    "build:application": "ng build application --prod=true --statsJson=true",
     "build:library": "ng build spinner",
     "test:application": "ng test application --codeCoverage=true --browsers=ChromeHeadless --watch=false",
     "test:library": "ng test spinner --codeCoverage=true --browsers=ChromeHeadless --watch=false",
